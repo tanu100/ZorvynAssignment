@@ -17,25 +17,19 @@ import lombok.Setter;
 @Setter
 public class UserDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotBlank(message = "Username can't be blank")
+    @NotBlank(message = "Name is required")
     private String name;
 
-    @Email(message = "Email can't be blank")
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @Size(min = 6)
     private String password;
 
-    @Enumerated(EnumType.STRING)
     @NotNull(message = "Role is required")
     private Role role;
 
-    @Enumerated(EnumType.STRING)
-    @NotNull(message = "Status is required")
     private Status status;
 }
