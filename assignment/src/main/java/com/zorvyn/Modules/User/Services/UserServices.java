@@ -1,12 +1,10 @@
-package com.zorvyn.Modules.Services;
+package com.zorvyn.Modules.User.Services;
 
 
 import com.zorvyn.Modules.User.DTOs.UserDto;
 import com.zorvyn.Modules.User.Exception.UserNotFoundException;
 import com.zorvyn.Modules.User.Models.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +15,10 @@ public class UserServices {
 
     private final com.zorvyn.Modules.User.Repository.JpaRepo table;
 
-    public ResponseEntity<User> FindById(Long Id){
-        return new ResponseEntity<>(table.findById(Id).orElseThrow(()->
-                new UserNotFoundException("User Not found in database")),
-                HttpStatus.OK
-        );
+    public User FindById(Long Id){
+        return table.findById(Id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
     }
 
     public List<User> Getusers(){
@@ -40,7 +37,7 @@ public class UserServices {
     }
 
     public User UpdateUser(Long Id,UserDto userDto){
-        User user=FindById(Id).getBody();
+        User user=FindById(Id);
         user.setName(userDto.getName());
         user.setEmail(userDto.getEmail());
         user.setPassword(userDto.getPassword());
@@ -50,7 +47,7 @@ public class UserServices {
     }
 
     public String DeleteUser(Long Id){
-        User user=FindById(Id).getBody();
+        User user=FindById(Id);
         table.delete(user);
         return "User with Id " + Id +" is Deleted";
     }

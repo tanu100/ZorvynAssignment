@@ -31,7 +31,7 @@ public class UserController {
 
     @GetMapping("/{Id}")
     public ResponseEntity<User> GetById(@PathVariable Long Id){
-        return services.FindById(Id);
+        return new ResponseEntity<>(services.FindById(Id),HttpStatus.OK);
     }
 
     @PutMapping("/{Id}")
