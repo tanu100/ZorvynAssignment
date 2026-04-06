@@ -22,22 +22,18 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Username can't be blank")
     private String name;
 
-    @Email(message = "Email can't be blank")
+    @Column(unique = true,nullable = false)
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "Role is required")
     private Role role;
 
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "Status is required")
     private Status status;
 
     private LocalDateTime createdAt;

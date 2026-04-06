@@ -5,6 +5,7 @@ import com.zorvyn.Modules.User.DTOs.UserDto;
 import com.zorvyn.Modules.User.Exception.UserNotFoundException;
 import com.zorvyn.Modules.User.Models.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,6 +15,8 @@ import java.util.List;
 public class UserServices {
 
     private final com.zorvyn.Modules.User.Repository.JpaRepo table;
+
+    private final PasswordEncoder passwordEncoder;
 
     public User FindById(Long Id){
         return table.findById(Id)
@@ -27,10 +30,9 @@ public class UserServices {
 
     public User CreateUser(UserDto userDto){
         User user=new User();
-        user.setId(userDto.getId());
         user.setName(userDto.getName());
         user.setEmail(userDto.getEmail());
-        user.setPassword(userDto.getPassword());
+        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         user.setRole(userDto.getRole());
         user.setStatus(userDto.getStatus());
         return table.save(user);
