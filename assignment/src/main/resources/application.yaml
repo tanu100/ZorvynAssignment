@@ -10,10 +10,12 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
 
 server:
   port: 8081
 
 
+security:
+  secret-key: "mySuperSecretKeyThatIsAtLeast32CharactersLong"
