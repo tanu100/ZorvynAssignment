@@ -1,7 +1,7 @@
 package com.zorvyn.Modules;
 
-import com.zorvyn.Modules.User.Models.Role;
-import com.zorvyn.Modules.User.Models.Status;
+import com.zorvyn.Modules.Shared.Enums.Role;
+import com.zorvyn.Modules.Shared.Enums.Status;
 import com.zorvyn.Modules.User.Models.User;
 import com.zorvyn.Modules.User.Repository.JpaRepo;
 import lombok.RequiredArgsConstructor;

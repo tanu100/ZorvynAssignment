@@ -1,8 +1,7 @@
 package com.zorvyn.Modules.User.DTOs;
 
-import com.zorvyn.Modules.User.Models.Role;
-import com.zorvyn.Modules.User.Models.Status;
-import jakarta.persistence.*;
+import com.zorvyn.Modules.Shared.Enums.Role;
+import com.zorvyn.Modules.Shared.Enums.Status;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

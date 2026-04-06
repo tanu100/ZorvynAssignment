@@ -1,6 +1,6 @@
 package com.zorvyn.Modules.Security;
 
-import com.zorvyn.Modules.User.Models.Status;
+import com.zorvyn.Modules.Shared.Enums.Status;
 import com.zorvyn.Modules.User.Models.User;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;

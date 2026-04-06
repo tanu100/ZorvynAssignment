@@ -1,4 +1,4 @@
-package com.zorvyn.Modules.User.Models;
+package com.zorvyn.Modules.Shared.Enums;
 
 public enum Role {
     VIEWER,

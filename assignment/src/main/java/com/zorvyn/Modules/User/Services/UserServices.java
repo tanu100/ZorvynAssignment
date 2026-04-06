@@ -2,7 +2,7 @@ package com.zorvyn.Modules.User.Services;
 
 
 import com.zorvyn.Modules.User.DTOs.UserDto;
-import com.zorvyn.Modules.User.Exception.UserNotFoundException;
+import com.zorvyn.Modules.Shared.Exception.Errors.UserNotFoundException;
 import com.zorvyn.Modules.User.Models.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;

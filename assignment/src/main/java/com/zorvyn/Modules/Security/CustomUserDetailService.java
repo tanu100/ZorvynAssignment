@@ -1,6 +1,6 @@
 package com.zorvyn.Modules.Security;
 
-import com.zorvyn.Modules.User.Exception.UserNotFoundException;
+import com.zorvyn.Modules.Shared.Exception.Errors.UserNotFoundException;
 import com.zorvyn.Modules.User.Models.User;
 import com.zorvyn.Modules.User.Repository.JpaRepo;
 import lombok.RequiredArgsConstructor;

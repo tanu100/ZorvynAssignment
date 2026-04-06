@@ -1,4 +1,4 @@
-package com.zorvyn.Modules.User.Exception;
+package com.zorvyn.Modules.Shared.Exception.Errors;
 
 public class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(String msg){
