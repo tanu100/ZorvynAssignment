@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/zorvyn
     username: root
-    password: Tcj@1234
+    password:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 
@@ -18,4 +18,4 @@ server:
 
 
 security:
-  secret-key: "mySuperSecretKeyThatIsAtLeast32CharactersLong"
+  secret-key: "1d84793e9ba52b3309f63c16e03c8fd6b26dcfcf915738fffe1843ddbb56db21"

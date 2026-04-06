@@ -1,5 +1,7 @@
 package com.zorvyn.Modules.Report.Models;
 
+import com.zorvyn.Modules.Shared.Enums.TransactionType;
+import com.zorvyn.Modules.User.Models.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -37,6 +40,28 @@ public class Transaction {
 
     private String notes;
 
-    // Soft delete flag — record stays in DB but is treated as deleted
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User createdBy;
+
+
+    private LocalDateTime createdAt;
+
+
+    private LocalDateTime updatedAt;
+
+    // Soft delete
     private boolean deleted = false;
+
+
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

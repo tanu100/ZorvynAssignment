@@ -1,4 +1,4 @@
-package com.zorvyn.Modules.Report.Models;
+package com.zorvyn.Modules.Shared.Enums;
 
 public enum TransactionType {
     INCOME,

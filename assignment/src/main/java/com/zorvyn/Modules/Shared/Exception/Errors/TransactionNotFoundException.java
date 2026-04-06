@@ -1,4 +1,4 @@
-package com.zorvyn.Modules.Report.Exception;
+package com.zorvyn.Modules.Shared.Exception.Errors;
 
 public class TransactionNotFoundException extends RuntimeException {
 

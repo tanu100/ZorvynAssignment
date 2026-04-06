@@ -2,64 +2,42 @@ package com.zorvyn.Modules.Report.Services;
 
 import com.zorvyn.Modules.Report.DTOs.TransactionDto;
 import com.zorvyn.Modules.Report.DTOs.TransactionResponseDto;
-import com.zorvyn.Modules.Report.Exception.TransactionNotFoundException;
-import com.zorvyn.Modules.Report.Exception.UnauthorizedActionException;
 import com.zorvyn.Modules.Report.Models.Transaction;
-import com.zorvyn.Modules.Report.Models.TransactionType;
 import com.zorvyn.Modules.Report.Repository.TransactionRepository;
-import com.zorvyn.Modules.User.Models.Role;
+import com.zorvyn.Modules.Security.CustomUserDetails;
+import com.zorvyn.Modules.Shared.Enums.Role;
+import com.zorvyn.Modules.Shared.Enums.TransactionType;
+import com.zorvyn.Modules.Shared.Exception.Errors.TransactionNotFoundException;
 import com.zorvyn.Modules.User.Models.User;
-import com.zorvyn.Modules.User.Services.UserServices;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
 
     private final TransactionRepository repo;
-    private final UserServices userServices;
 
-    // -------------------------------------------------------------------------
-    // Access Control Helpers
-    // -------------------------------------------------------------------------
+    private User getCurrentUser() {
+        CustomUserDetails userDetails =
+                (CustomUserDetails) SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getPrincipal();
 
-    /**
-     * Only ADMIN can create, update, or delete.
-     */
-    private void requireAdmin(Long userId) {
-        User user = userServices.FindById(userId);
-        if (user.getRole() != Role.ADMIN) {
-            throw new UnauthorizedActionException(
-                    "Access denied. Only ADMIN can perform this action.");
-        }
+        return userDetails.getUser();
     }
 
-    /**
-     * VIEWER, ANALYST, and ADMIN can all read/view.
-     * We still fetch the user to confirm they exist and are ACTIVE.
-     */
-    private void requireActiveUser(Long userId) {
-        User user = userServices.FindById(userId);
-        if (user.getStatus() != com.zorvyn.Modules.User.Models.Status.ACTIVE) {
-            throw new UnauthorizedActionException(
-                    "Access denied. Your account is inactive.");
-        }
-    }
 
-    // -------------------------------------------------------------------------
-    // CRUD Operations
-    // -------------------------------------------------------------------------
+    @PreAuthorize("hasAnyRole('VIEWER','ANALYST','ADMIN')")
+    public TransactionResponseDto create(TransactionDto dto) {
 
-    /**
-     * Create a new financial record. ADMIN only.
-     */
-    public TransactionResponseDto create(Long userId, TransactionDto dto) {
-        requireAdmin(userId);
+        User user = getCurrentUser();
 
         Transaction t = new Transaction();
         t.setAmount(dto.getAmount());
@@ -67,40 +45,62 @@ public class TransactionService {
         t.setCategory(dto.getCategory());
         t.setDate(dto.getDate());
         t.setNotes(dto.getNotes());
+        t.setCreatedBy(user);
 
         return toDto(repo.save(t));
     }
 
-    /**
-     * Get all active (non-deleted) records.
-     * All roles can access — VIEWER, ANALYST, ADMIN.
-     */
-    public List<TransactionResponseDto> getAll(Long userId) {
-        requireActiveUser(userId);
-        return repo.findAllByDeletedFalse()
+
+    @PreAuthorize("hasAnyRole('VIEWER','ANALYST','ADMIN')")
+    public List<TransactionResponseDto> getAll() {
+
+        User user = getCurrentUser();
+
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.ANALYST) {
+            return repo.findAllByDeletedFalse()
+                    .stream()
+                    .map(this::toDto)
+                    .toList();
+        }
+
+        return repo.findByCreatedByAndDeletedFalse(user)
                 .stream()
                 .map(this::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    /**
-     * Get a single record by ID. All roles can access.
-     */
-    public TransactionResponseDto getById(Long userId, Long transactionId) {
-        requireActiveUser(userId);
-        Transaction t = repo.findByIdAndDeletedFalse(transactionId)
-                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+    @PreAuthorize("hasAnyRole('VIEWER','ANALYST','ADMIN')")
+    public TransactionResponseDto getById(Long id) {
+
+        User user = getCurrentUser();
+
+        Transaction t = repo.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new TransactionNotFoundException(id));
+
+        // VIEWER → only own
+        if (user.getRole() == Role.VIEWER &&
+                !t.getCreatedBy().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not allowed to access this transaction");
+        }
+
         return toDto(t);
     }
 
-    /**
-     * Update an existing record. ADMIN only.
-     */
-    public TransactionResponseDto update(Long userId, Long transactionId, TransactionDto dto) {
-        requireAdmin(userId);
 
-        Transaction t = repo.findByIdAndDeletedFalse(transactionId)
-                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+    @PreAuthorize("hasAnyRole('VIEWER','ADMIN')")
+    public TransactionResponseDto update(Long id, TransactionDto dto) {
+
+        User user = getCurrentUser();
+
+        Transaction t = repo.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new TransactionNotFoundException(id));
+
+        // VIEWER → only own
+        if (user.getRole() == Role.VIEWER &&
+                !t.getCreatedBy().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not allowed to update this transaction");
+        }
 
         t.setAmount(dto.getAmount());
         t.setType(dto.getType());
@@ -111,71 +111,86 @@ public class TransactionService {
         return toDto(repo.save(t));
     }
 
-    /**
-     * Soft delete — marks as deleted, does NOT remove from DB.
-     * ADMIN only.
-     */
-    public String delete(Long userId, Long transactionId) {
-        requireAdmin(userId);
 
-        Transaction t = repo.findByIdAndDeletedFalse(transactionId)
-                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+    @PreAuthorize("hasRole('ADMIN')")
+    public String delete(Long id) {
+
+        Transaction t = repo.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new TransactionNotFoundException(id));
 
         t.setDeleted(true);
         repo.save(t);
 
-        return "Transaction with id " + transactionId + " has been deleted.";
+        return "Transaction deleted successfully";
     }
 
-    // -------------------------------------------------------------------------
-    // Filtering
-    // -------------------------------------------------------------------------
 
-    /**
-     * Filter transactions by any combination of type, category, and date range.
-     * All roles can filter.
-     */
+    @PreAuthorize("hasAnyRole('VIEWER','ANALYST','ADMIN')")
     public List<TransactionResponseDto> filter(
-            Long userId,
             TransactionType type,
             String category,
             LocalDate from,
             LocalDate to) {
 
-        requireActiveUser(userId);
+        User user = getCurrentUser();
 
-        List<Transaction> results;
+        List<Transaction> transactions;
 
-        boolean hasType     = type != null;
-        boolean hasCategory = category != null && !category.isBlank();
-        boolean hasDateRange = from != null && to != null;
-
-        if (hasType && hasCategory && hasDateRange) {
-            results = repo.findAllByTypeAndCategoryIgnoreCaseAndDateBetweenAndDeletedFalse(type, category, from, to);
-        } else if (hasType && hasCategory) {
-            results = repo.findAllByTypeAndCategoryIgnoreCaseAndDeletedFalse(type, category);
-        } else if (hasType && hasDateRange) {
-            results = repo.findAllByTypeAndDateBetweenAndDeletedFalse(type, from, to);
-        } else if (hasCategory && hasDateRange) {
-            results = repo.findAllByCategoryIgnoreCaseAndDateBetweenAndDeletedFalse(category, from, to);
-        } else if (hasType) {
-            results = repo.findAllByTypeAndDeletedFalse(type);
-        } else if (hasCategory) {
-            results = repo.findAllByCategoryIgnoreCaseAndDeletedFalse(category);
-        } else if (hasDateRange) {
-            results = repo.findAllByDateBetweenAndDeletedFalse(from, to);
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.ANALYST) {
+            transactions = repo.findAllByDeletedFalse();
         } else {
-            results = repo.findAllByDeletedFalse();
+            transactions = repo.findByCreatedByAndDeletedFalse(user);
         }
 
-        return results.stream()
+        return transactions.stream()
+                .filter(t -> type == null || t.getType() == type)
+                .filter(t -> category == null || t.getCategory().equalsIgnoreCase(category))
+                .filter(t -> from == null || !t.getDate().isBefore(from))
+                .filter(t -> to == null || !t.getDate().isAfter(to))
                 .map(this::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // -------------------------------------------------------------------------
-    // Mapping (inline — no separate mapper class)
-    // -------------------------------------------------------------------------
+
+
+    @PreAuthorize("hasAnyRole('VIEWER','ANALYST','ADMIN')")
+    public Double getTotalIncome() {
+        User user = getCurrentUser();
+
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.ANALYST) {
+            return repo.getTotalIncome();
+        }
+
+        return repo.getUserIncome(user.getId());
+    }
+
+    @PreAuthorize("hasAnyRole('VIEWER','ANALYST','ADMIN')")
+    public Double getTotalExpense() {
+        User user = getCurrentUser();
+
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.ANALYST) {
+            return repo.getTotalExpense();
+        }
+
+        return repo.getUserExpense(user.getId());
+    }
+
+    @PreAuthorize("hasAnyRole('VIEWER','ANALYST','ADMIN')")
+    public List<TransactionResponseDto> getRecentTransactions() {
+
+        User user = getCurrentUser();
+
+        List<Transaction> list;
+
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.ANALYST) {
+            list = repo.findTop5ByDeletedFalseOrderByDateDesc();
+        } else {
+            list = repo.findTop5ByCreatedByAndDeletedFalseOrderByDateDesc(user);
+        }
+
+        return list.stream().map(this::toDto).toList();
+    }
+
 
     private TransactionResponseDto toDto(Transaction t) {
         return TransactionResponseDto.builder()
@@ -185,6 +200,7 @@ public class TransactionService {
                 .category(t.getCategory())
                 .date(t.getDate())
                 .notes(t.getNotes())
+                .createdBy(t.getCreatedBy().getId())
                 .build();
     }
 }

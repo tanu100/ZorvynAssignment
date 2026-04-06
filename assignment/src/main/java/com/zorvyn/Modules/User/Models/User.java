@@ -1,5 +1,7 @@
 package com.zorvyn.Modules.User.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.zorvyn.Modules.Report.Models.Transaction;
 import com.zorvyn.Modules.Shared.Enums.Role;
 import com.zorvyn.Modules.Shared.Enums.Status;
 import jakarta.persistence.*;
@@ -8,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -40,4 +43,8 @@ public class User {
     public void setCreatedAt() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Transaction> transactions;
 }

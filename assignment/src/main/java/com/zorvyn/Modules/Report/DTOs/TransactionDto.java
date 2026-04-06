@@ -1,6 +1,6 @@
 package com.zorvyn.Modules.Report.DTOs;
 
-import com.zorvyn.Modules.Report.Models.TransactionType;
+import com.zorvyn.Modules.Shared.Enums.TransactionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

@@ -3,6 +3,8 @@ package com.zorvyn.Modules.Shared.Exception;
 
 import com.zorvyn.Modules.Shared.Exception.Dtos.ErrorResponseDto;
 import com.zorvyn.Modules.Shared.Exception.Dtos.ValidationErrorDto;
+import com.zorvyn.Modules.Shared.Exception.Errors.TransactionNotFoundException;
+import com.zorvyn.Modules.Shared.Exception.Errors.UnauthorizedActionException;
 import com.zorvyn.Modules.Shared.Exception.Errors.UserNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -44,6 +46,37 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(errorResponseDto,HttpStatus.CONFLICT);
+    }
+    @ExceptionHandler(TransactionNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleNotFound(TransactionNotFoundException e) {
+        return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedActionException.class)
+    public ResponseEntity<ErrorResponseDto> handleUnauthorized(UnauthorizedActionException e) {
+        return buildResponse(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+
+    private ResponseEntity<ErrorResponseDto> buildResponse(HttpStatus status, String message) {
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .StatusCode(status.value())
+                .msg(message)
+                .timestamp(System.currentTimeMillis())
+                .build();
+        return new ResponseEntity<>(error, status);
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDto> handleAccessDenied(Exception e) {
+        return buildResponse(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ErrorResponseDto> handleAuthentication(Exception e) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Authentication failed");
+    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDto> handleGeneric(Exception e) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 
 }

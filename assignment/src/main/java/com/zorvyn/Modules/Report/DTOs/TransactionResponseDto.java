@@ -1,14 +1,14 @@
 package com.zorvyn.Modules.Report.DTOs;
 
-import com.zorvyn.Modules.Report.Models.TransactionType;
+import com.zorvyn.Modules.Shared.Enums.TransactionType;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
 
-@Getter
-@Setter
+@Data
 @Builder
 public class TransactionResponseDto {
 
@@ -18,4 +18,6 @@ public class TransactionResponseDto {
     private String category;
     private LocalDate date;
     private String notes;
+
+    private Long createdBy;
 }
